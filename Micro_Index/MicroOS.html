@@ -1,0 +1,1146 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>MicroOS Programming Environment</title>
+        <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f0f0f0;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+        }
+        
+        header {
+            background-color: #333;
+            color: white;
+            padding: 10px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .container {
+            display: flex;
+            flex: 1;
+            overflow: hidden;
+        }
+        
+        .editor-container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            border-right: 1px solid #ccc;
+        }
+        
+        .output-container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .editor, .console, .display {
+            border: none;
+            margin: 0;
+            padding: 10px;
+            resize: none;
+            font-family: 'Consolas', monospace;
+            font-size: 14px;
+        }
+        
+        .editor {
+            flex: 1;
+            background-color: #1e1e1e;
+            color: #d4d4d4;
+            overflow: auto;
+        }
+        
+        .panel-header {
+            background-color: #555;
+            color: white;
+            padding: 5px 10px;
+            font-weight: bold;
+        }
+        
+        .display {
+            flex: 2;
+            background-color: white;
+            overflow: auto;
+        }
+        
+        .console {
+            flex: 1;
+            background-color: #1e1e1e;
+            color: #dcf1dd;
+            overflow: auto;
+        }
+        
+        .button-panel {
+            background-color: #eee;
+            padding: 10px;
+            display: flex;
+            gap: 10px;
+        }
+        
+        button {
+            padding: 8px 16px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: bold;
+            user-select: none;
+        }
+        
+        button:hover {
+            background-color: #45a049;
+        }
+        
+        .examples-dropdown {
+            padding: 8px;
+            border-radius: 4px;
+            border: 1px solid #ccc;
+        }
+
+        .editor-wrapper {
+            position: relative;
+            flex: auto;
+            overflow: auto;
+        }
+
+        .line-numbers {
+            position: absolute;
+            left: 0;
+            top: 0;
+            min-width: 15px;
+            width: fit-content;
+            height: 100%;
+            background-color: #2d2d2d;
+            color: #858585;
+            text-align: right;
+            padding: 10px 5px;
+            font-family: Consolas, monospace;
+            user-select: none;
+        }
+
+        .editor {
+            padding-left: 50px !important;
+            height: 100% !important;
+            width: 100% !important;
+        }
+
+        .highlight-line {
+            background-color: #3a3a3a;
+        }
+
+        .file-tree {
+            width: 250px;
+            background-color: #1e1e1e;
+            color: #d4d4d4;
+            overflow-y: auto;
+            padding: 10px;
+        }
+
+        .file-tree ul {
+            list-style: none;
+            padding-left: 20px;
+        }
+
+        .file-tree li {
+            cursor: pointer;
+            padding: 2px 5px;
+        }
+
+        .file-tree li:hover {
+            background-color: #3a3a3a;
+        }
+
+        .file-tree .selected {
+            background-color: #094771;
+        }
+
+        .context-menu {
+            position: absolute;
+            background: #2d2d2d;
+            border: 1px solid #454545;
+            box-shadow: 2px 2px 5px rgba(0,0,0,0.2);
+            z-index: 1000;
+        }
+
+        .context-menu-item {
+            padding: 5px 15px;
+            cursor: pointer;
+        }
+
+        .context-menu-item:hover {
+            background-color: #094771;
+        }
+    </style>
+    </head>
+    <body>
+        <header>
+            <h1>MicroOS Programming Environment</h1>
+            <div>
+                <select id="examples-dropdown" class="examples-dropdown">
+                    <option value>Select Example...</option>
+                    <option value="hello">Hello World</option>
+                    <option value="graphics">Graphics Demo</option>
+                    <option value="fibonacci">Fibonacci Sequence</option>
+                    <option value="bootloader">Simple Bootloader</option>
+                </select>
+            </div>
+        </header>
+
+        <div class="container">
+            <div class="editor-container">
+                <div class="panel-header">Code Editor</div>
+                <div class="editor-wrapper">
+                    <div id="line-numbers" class="line-numbers"></div>
+                    <textarea id="editor" class="editor" spellcheck="false">
+# Welcome to MicroOS programming language
+# This is a custom language running in your browser
+
+function main() {
+    print("Welcome to MicroOS!")
+    print("This is a custom programming language")
+    print("running entirely in your browser")
+    
+    # Draw something on the screen
+    set_color(0, 128, 255)
+    draw_rectangle(50, 50, 150, 100)
+    
+    set_color(255, 255, 0)
+    draw_text(60, 90, "MicroOS")
+}
+
+# Call the main function to execute our program
+main()
+</textarea>
+                </div>
+                <div class="button-panel">
+                    <button id="run-button">Run Program</button>
+                    <button id="save-button">Save Program</button>
+                    <button id="clear-button">Clear Console</button>
+                </div>
+            </div>
+
+            <div class="output-container">
+                <div class="panel-header">Output Display</div>
+                <div id="display" class="display">
+                    <canvas id="canvas" width="600" height="400"></canvas>
+                </div>
+                <div class="panel-header">Console Output</div>
+                <div id="console" class="console"></div>
+            </div>
+        </div>
+
+        <script>
+                // File System Managment
+                class FileSystem {
+                    constructor() {
+                        this.tree = JSON.parse(localStorage.getItem('microos-fs')) || {
+                            name: 'root',
+                            type: 'folder',
+                            children: [],
+                            path: '/'
+                        };
+                        this.currentFile = null;
+                        this.autoSaveTimeout = null;
+                    }
+        
+                    saveToStorage() {
+                        localStorage.setItem('microos-fs', JSON.stringify(this.tree));
+                    }
+        
+                    createFile(name, parent, content = '') {
+                        const newFile = {
+                            name: name.endsWith('.icr') ? name : `${name}.icr`,
+                            type: 'file',
+                            content: content,
+                            path: `${parent.path}/${name}`
+                        };
+                        parent.children.push(newFile);
+                        this.saveToStorage();
+                        return newFile;
+                    }
+        
+                    createFolder(name, parent) {
+                        const newFolder = {
+                            name,
+                            type: 'folder',
+                            children: [],
+                            path: `${parent.path}/${name}`
+                        };
+                        parent.children.push(newFolder);
+                        this.saveToStorage();
+                        return newFolder;
+                    }
+        
+                    deleteNode(node) {
+                        const parent = this.findParent(node);
+                        parent.children = parent.children.filter(n => n !== node);
+                        this.saveToStorage();
+                    }
+        
+                    findParent(node, current = this.tree) {
+                        if (current.children.includes(node)) return current;
+                        for (const child of current.children) {
+                            if (child.type === 'folder') {
+                                const found = this.findParent(node, child);
+                                if (found) return found;
+                            }
+                        }
+                        return null;
+                    }
+                }
+        
+                // Line Numbers and Highlighting
+                class EditorUI {
+                    constructor() {
+                        this.editor = document.getElementById('editor');
+                        this.lineNumbers = document.getElementById('line-numbers');
+                        this.highlightedLine = null;
+                        
+                        this.editor.addEventListener('input', this.updateLineNumbers.bind(this));
+                        this.editor.addEventListener('scroll', this.syncScroll.bind(this));
+                        this.editor.addEventListener('keyup', this.highlightCurrentLine.bind(this));
+                        this.editor.addEventListener('mousemove', this.highlightCurrentLine.bind(this));
+                        
+                        this.lineNumbers.addEventListener('mousedown', this.handleLineNumberClick.bind(this));
+                        
+                        this.updateLineNumbers();
+                    }
+        
+                    updateLineNumbers() {
+                        const lines = this.editor.value.split('\n');
+                        this.lineNumbers.innerHTML = lines.map((_, i) => `<div>${i + 1}</div>`).join('');
+                    }
+        
+                    syncScroll() {
+                        this.lineNumbers.scrollTop = this.editor.scrollTop;
+                    }
+        
+                    highlightCurrentLine() {
+                        const cursorPos = this.editor.selectionStart;
+                        const lines = this.editor.value.substr(0, cursorPos).split('\n');
+                        const lineNumber = lines.length;
+        
+                        if (this.highlightedLine) {
+                            this.highlightedLine.classList.remove('highlight-line');
+                        }
+        
+                        const lineDivs = this.lineNumbers.getElementsByTagName('div');
+                        if (lineDivs[lineNumber - 1]) {
+                            this.highlightedLine = lineDivs[lineNumber - 1];
+                            this.highlightedLine.classList.add('highlight-line');
+                        }
+                    }
+        
+                    handleLineNumberClick(e) {
+                        const lineDiv = e.target;
+                        if (lineDiv.tagName === 'DIV') {
+                            const lineNumber = parseInt(lineDiv.textContent);
+                            this.editor.focus();
+                            const lines = this.editor.value.split('\n');
+                            let pos = 0;
+                            for (let i = 0; i < lineNumber - 1; i++) {
+                                pos += lines[i].length + 1;
+                            }
+                            this.editor.setSelectionRange(pos, pos + lines[lineNumber - 1].length);
+                        }
+                    }
+                }
+        
+                // Initialize Application
+                window.onload = function() {
+                    const fs = new FileSystem();
+                    const editorUI = new EditorUI();
+                    const microOS = new MicroOS();
+        
+                    // File Tree Rendering
+                    function renderFileTree(node, parentElement) {
+                        const li = document.createElement('li');
+                        li.textContent = node.name;
+                        li.dataset.node = JSON.stringify(node);
+                        
+                        if (node.type === 'folder') {
+                            const ul = document.createElement('ul');
+                            node.children.forEach(child => renderFileTree(child, ul));
+                            li.appendChild(ul);
+                        }
+                        
+                        parentElement.appendChild(li);
+                    }
+        
+                    const fileTree = document.getElementById('file-tree');
+                    fileTree.innerHTML = '';
+                    renderFileTree(fs.tree, fileTree);
+        
+                    // File System Event Handlers
+                    document.getElementById('new-file').addEventListener('click', () => {
+                        const name = prompt('Enter file name:');
+                        if (name) {
+                            fs.createFile(name, fs.tree);
+                            fileTree.innerHTML = '';
+                            renderFileTree(fs.tree, fileTree);
+                        }
+                    });
+        
+                    // Auto-save Implementation
+                    editor.editor.addEventListener('input', () => {
+                        clearTimeout(fs.autoSaveTimeout);
+                        fs.autoSaveTimeout = setTimeout(() => {
+                            if (fs.currentFile) {
+                                fs.currentFile.content = editor.value;
+                                fs.saveToStorage();
+                            }
+                        }, 1000);
+                    });
+            };
+
+        // MicroOS Programming Language Interpreter
+        class MicroOS {
+            constructor() {
+                this.console = document.getElementById('console');
+                this.canvas = document.getElementById('canvas');
+                this.ctx = this.canvas.getContext('2d');
+                this.variables = {};
+                this.functions = {};
+                
+                // Initialize the system
+                this.clearConsole();
+                this.clearDisplay();
+            }
+            
+            // Console output functions
+            print(message) {
+                this.console.innerHTML += `<div>${message}</div>`;
+                this.console.scrollTop = this.console.scrollHeight;
+            }
+            
+            error(message) {
+                this.console.innerHTML += `<div style="color: #ff6b6b;">[ERROR] ${message}</div>`;
+                this.console.scrollTop = this.console.scrollHeight;
+            }
+            
+            clearConsole() {
+                this.console.innerHTML = '';
+            }
+            
+            // Display functions
+            clearDisplay() {
+                this.ctx.fillStyle = '#ffffff';
+                this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+            }
+            
+            setColor(r, g, b) {
+                this.ctx.fillStyle = `rgb(${r}, ${g}, ${b})`;
+                this.ctx.strokeStyle = `rgb(${r}, ${g}, ${b})`;
+            }
+            
+            drawRectangle(x, y, width, height) {
+                this.ctx.fillRect(x, y, width, height);
+            }
+            
+            drawCircle(x, y, radius) {
+                this.ctx.beginPath();
+                this.ctx.arc(x, y, radius, 0, Math.PI * 2);
+                this.ctx.fill();
+            }
+            
+            drawText(x, y, text) {
+                this.ctx.font = '16px Arial';
+                this.ctx.fillText(text, x, y);
+            }
+            
+            // Lexer: Convert source code to tokens
+            tokenize(sourceCode) {
+                // A simple tokenizer for our language
+                const tokens = [];
+                const lines = sourceCode.split('\n');
+                
+                for (let i = 0; i < lines.length; i++) {
+                    let line = lines[i].trim();
+                    
+                    // Skip empty lines and comments
+                    if (line === '' || line.startsWith('#')) {
+                        continue;
+                    }
+                    
+                    // Extract tokens from the line
+                    let currentPosition = 0;
+                    
+                    while (currentPosition < line.length) {
+                        let char = line[currentPosition];
+                        
+                        // Skip whitespace
+                        if (char === ' ' || char === '\t') {
+                            currentPosition++;
+                            continue;
+                        }
+                        
+                        // Identify keywords, identifiers, and literals
+                        if (/[a-zA-Z_]/.test(char)) {
+                            // Keyword or identifier
+                            let identifier = '';
+                            while (currentPosition < line.length && /[a-zA-Z0-9_]/.test(line[currentPosition])) {
+                                identifier += line[currentPosition];
+                                currentPosition++;
+                            }
+                            
+                            // Check if it's a keyword
+                            const keywords = ['function', 'if', 'else', 'while', 'for', 'return'];
+                            if (keywords.includes(identifier)) {
+                                tokens.push({ type: 'keyword', value: identifier, line: i + 1 });
+                            } else {
+                                tokens.push({ type: 'identifier', value: identifier, line: i + 1 });
+                            }
+                            continue;
+                        }
+                        
+                        // Numbers
+                        if (/[0-9]/.test(char)) {
+                            let number = '';
+                            while (currentPosition < line.length && /[0-9]/.test(line[currentPosition])) {
+                                number += line[currentPosition];
+                                currentPosition++;
+                            }
+                            tokens.push({ type: 'number', value: parseInt(number), line: i + 1 });
+                            continue;
+                        }
+                        
+                        // Strings
+                        if (char === '"') {
+                            let string = '';
+                            currentPosition++; // Skip the opening quote
+                            
+                            while (currentPosition < line.length && line[currentPosition] !== '"') {
+                                string += line[currentPosition];
+                                currentPosition++;
+                            }
+                            
+                            if (currentPosition < line.length) {
+                                currentPosition++; // Skip the closing quote
+                                tokens.push({ type: 'string', value: string, line: i + 1 });
+                            } else {
+                                this.error(`Unterminated string at line ${i + 1}`);
+                                return null;
+                            }
+                            continue;
+                        }
+                        
+                        // Operators and punctuation
+                        const operators = {
+                            '+': 'plus',
+                            '-': 'minus',
+                            '*': 'multiply',
+                            '/': 'divide',
+                            '=': 'assign',
+                            '(': 'lparen',
+                            ')': 'rparen',
+                            '{': 'lbrace',
+                            '}': 'rbrace',
+                            ',': 'comma',
+                            ';': 'semicolon'
+                        };
+                        
+                        if (operators[char]) {
+                            tokens.push({ type: operators[char], value: char, line: i + 1 });
+                            currentPosition++;
+                            continue;
+                        }
+                        
+                        // Unknown character
+                        this.error(`Unknown character '${char}' at line ${i + 1}`);
+                        return null;
+                    }
+                }
+                
+                return tokens;
+            }
+            
+            // Parser: Convert tokens to an abstract syntax tree (AST)
+            parse(tokens) {
+                if (!tokens || tokens.length === 0) {
+                    this.error("No tokens to parse");
+                    return null;
+                }
+                
+                // For simplicity, we'll implement a very basic parser
+                // that just identifies function declarations and function calls
+                
+                const ast = {
+                    type: 'Program',
+                    body: []
+                };
+                
+                let current = 0;
+                
+                // Helper function to peek at the next token
+                const peek = () => tokens[current];
+                
+                // Helper function to advance to the next token
+                const advance = () => tokens[current++];
+                
+                // Function to parse a function declaration
+                const parseFunction = () => {
+                    advance(); // Consume 'function' keyword
+                    
+                    if (current >= tokens.length) {
+                        this.error("Unexpected end of input after 'function'");
+                        return null;
+                    }
+                    
+                    const name = advance();
+                    if (name.type !== 'identifier') {
+                        this.error(`Expected function name at line ${name.line}`);
+                        return null;
+                    }
+                    
+                    if (current >= tokens.length) {
+                        this.error("Unexpected end of input after function name");
+                        return null;
+                    }
+                    
+                    const lparen = advance();
+                    if (lparen.type !== 'lparen') {
+                        this.error(`Expected '(' after function name at line ${lparen.line}`);
+                        return null;
+                    }
+                    
+                    if (current >= tokens.length) {
+                        this.error("Unexpected end of input in function parameters");
+                        return null;
+                    }
+                    
+                    // Parse parameters (we'll simplify and assume no parameters for now)
+                    const rparen = advance();
+                    if (rparen.type !== 'rparen') {
+                        this.error(`Expected ')' after parameters at line ${rparen.line}`);
+                        return null;
+                    }
+                    
+                    if (current >= tokens.length) {
+                        this.error("Unexpected end of input after function parameters");
+                        return null;
+                    }
+                    
+                    const lbrace = advance();
+                    if (lbrace.type !== 'lbrace') {
+                        this.error(`Expected '{' after function declaration at line ${lbrace.line}`);
+                        return null;
+                    }
+                    
+                    // Parse function body
+                    const body = [];
+                    while (current < tokens.length && peek().type !== 'rbrace') {
+                        const statement = parseStatement();
+                        if (statement) {
+                            body.push(statement);
+                        } else {
+                            return null;
+                        }
+                    }
+                    
+                    if (current >= tokens.length) {
+                        this.error('Unexpected end of file, expected ');
+                        return null;
+                    }
+                    
+                    advance(); // Consume '}'
+                    
+                    return {
+                        type: 'FunctionDeclaration',
+                        name: name.value,
+                        body: body
+                    };
+                };
+                
+                // Function to parse a function call
+                const parseFunctionCall = () => {
+                    const name = advance();
+                    
+                    if (current >= tokens.length) {
+                        this.error(`Unexpected end of input after function name ${name.value}`);
+                        return null;
+                    }
+                    
+                    const lparen = advance();
+                    if (lparen.type !== 'lparen') {
+                        this.error(`Expected '(' after function name at line ${lparen.line}`);
+                        return null;
+                    }
+                    
+                    // Parse arguments
+                    const args = [];
+                    
+                    if (current < tokens.length && peek().type !== 'rparen') {
+                        const arg = parseExpression();
+                        if (arg) {
+                            args.push(arg);
+                        } else {
+                            return null;
+                        }
+                        
+                        // Check for comma or closing parenthesis
+                        while (current < tokens.length && peek().type === 'comma') {
+                            advance(); // Consume comma
+                            
+                            if (current >= tokens.length) {
+                                this.error("Unexpected end of input after comma in arguments");
+                                return null;
+                            }
+                            
+                            const nextArg = parseExpression();
+                            if (nextArg) {
+                                args.push(nextArg);
+                            } else {
+                                return null;
+                            }
+                        }
+                    }
+                    
+                    if (current >= tokens.length) {
+                        this.error('Unexpected end of file, expected ');
+                        return null;
+                    }
+                    
+                    if (peek().type !== 'rparen') {
+                        this.error(`Expected ')' after arguments at line ${peek().line}`);
+                        return null;
+                    }
+                    
+                    advance(); // Consume ')'
+                    
+                    return {
+                        type: 'FunctionCall',
+                        name: name.value,
+                        arguments: args
+                    };
+                };
+                
+                // Function to parse an expression
+                const parseExpression = () => {
+                    if (current >= tokens.length) {
+                        this.error("Unexpected end of input in expression");
+                        return null;
+                    }
+                    
+                    const token = peek();
+                    
+                    if (token.type === 'number') {
+                        advance();
+                        return {
+                            type: 'NumberLiteral',
+                            value: token.value
+                        };
+                    }
+                    
+                    if (token.type === 'string') {
+                        advance();
+                        return {
+                            type: 'StringLiteral',
+                            value: token.value
+                        };
+                    }
+                    
+                    if (token.type === 'identifier') {
+                        if (current + 1 < tokens.length && tokens[current + 1].type === 'lparen') {
+                            return parseFunctionCall();
+                        } else {
+                            advance();
+                            return {
+                                type: 'Variable',
+                                name: token.value
+                            };
+                        }
+                    }
+                    
+                    this.error(`Unexpected token ${token.type} at line ${token.line}`);
+                    return null;
+                };
+                
+                // Function to parse a statement
+                const parseStatement = () => {
+                    if (current >= tokens.length) {
+                        this.error("Unexpected end of input in statement");
+                        return null;
+                    }
+                    
+                    const token = peek();
+                    
+                    if (token.type === 'keyword' && token.value === 'function') {
+                        return parseFunction();
+                    }
+                    
+                    if (token.type === 'identifier') {
+                        return parseExpression();
+                    }
+                    
+                    this.error(`Unexpected token ${token.type} at line ${token.line}`);
+                    return null;
+                };
+                
+                // Parse the program
+                while (current < tokens.length) {
+                    const statement = parseStatement();
+                    if (statement) {
+                        ast.body.push(statement);
+                    } else {
+                        return null;
+                    }
+                }
+                
+                return ast;
+            }
+            
+            // Interpreter: Execute the AST
+            evaluate(node) {
+                if (!node) {
+                    this.error("Invalid node in evaluation");
+                    return undefined;
+                }
+                
+                switch (node.type) {
+                    case 'Program':
+                        let result;
+                        for (const statement of node.body) {
+                            result = this.evaluate(statement);
+                        }
+                        return result;
+                        
+                    case 'FunctionDeclaration':
+                        this.functions[node.name] = node;
+                        return undefined;
+                        
+                    case 'FunctionCall':
+                        // Check if it's a built-in function
+                        if (node.name === 'print') {
+                            const args = node.arguments.map(arg => this.evaluate(arg));
+                            this.print(args.join(' '));
+                            return undefined;
+                        }
+                        
+                        if (node.name === 'set_color') {
+                            const args = node.arguments.map(arg => this.evaluate(arg));
+                            if (args.length >= 3) {
+                                this.setColor(args[0], args[1], args[2]);
+                            } else {
+                                this.error(`set_color requires 3 arguments (r, g, b), got ${args.length}`);
+                            }
+                            return undefined;
+                        }
+                        
+                        if (node.name === 'draw_rectangle') {
+                            const args = node.arguments.map(arg => this.evaluate(arg));
+                            if (args.length >= 4) {
+                                this.drawRectangle(args[0], args[1], args[2], args[3]);
+                            } else {
+                                this.error(`draw_rectangle requires 4 arguments (x, y, width, height), got ${args.length}`);
+                            }
+                            return undefined;
+                        }
+                        
+                        if (node.name === 'draw_circle') {
+                            const args = node.arguments.map(arg => this.evaluate(arg));
+                            if (args.length >= 3) {
+                                this.drawCircle(args[0], args[1], args[2]);
+                            } else {
+                                this.error(`draw_circle requires 3 arguments (x, y, radius), got ${args.length}`);
+                            }
+                            return undefined;
+                        }
+                        
+                        if (node.name === 'draw_text') {
+                            const args = node.arguments.map(arg => this.evaluate(arg));
+                            if (args.length >= 3) {
+                                this.drawText(args[0], args[1], args[2]);
+                            } else {
+                                this.error(`draw_text requires 3 arguments (x, y, text), got ${args.length}`);
+                            }
+                            return undefined;
+                        }
+                        
+                        // Check if it's a user-defined function
+                        const func = this.functions[node.name];
+                        if (func) {
+                            // Call the function (for simplicity, we don't handle parameters yet)
+                            for (const statement of func.body) {
+                                this.evaluate(statement);
+                            }
+                            return undefined;
+                        }
+                        
+                        this.error(`Unknown function: ${node.name}`);
+                        return undefined;
+                        
+                    case 'NumberLiteral':
+                        return node.value;
+                        
+                    case 'StringLiteral':
+                        return node.value;
+                        
+                    case 'Variable':
+                        const varValue = this.variables[node.name];
+                        if (varValue !== undefined) {
+                            return varValue;
+                        }
+                        this.error(`Undefined variable: ${node.name}`);
+                        return 0;
+                        
+                    default:
+                        this.error(`Unknown node type: ${node.type}`);
+                        return undefined;
+                }
+            }
+            
+            // Main execution function
+            execute(sourceCode) {
+                if (!sourceCode || sourceCode.trim() === '') {
+                    this.error("No source code to execute");
+                    return;
+                }
+                
+                this.print("Executing MicroOS program...");
+                
+                // Reset state
+                this.variables = {};
+                this.functions = {};
+                this.clearDisplay();
+                
+                // Tokenize
+                const tokens = this.tokenize(sourceCode);
+                if (!tokens) {
+                    this.error("Tokenization failed");
+                    return;
+                }
+                
+                // Parse
+                const ast = this.parse(tokens);
+                if (!ast) {
+                    this.error("Parsing failed");
+                    return;
+                }
+                
+                // Execute
+                try {
+                    this.evaluate(ast);
+                    this.print("Program execution completed");
+                } catch (err) {
+                    this.error(`Runtime error: ${err.message || "Unknown error"}`);
+                    console.error(err); // For debugging
+                }
+            }
+            
+            // Demo code examples
+            getExample(exampleName) {
+                const examples = {
+                    hello: `# Hello World Example
+function main() {
+    print("Hello, World!")
+    print("Welcome to MicroOS Programming Language")
+    print("This language runs directly in your browser")
+}
+
+main()`,
+                    
+                    graphics: `# Graphics Demo Example
+function main() {
+    # Draw a simple scene
+    
+    # Background
+    set_color(135, 206, 235)
+    draw_rectangle(0, 0, 600, 300)
+    
+    # Ground
+    set_color(34, 139, 34)
+    draw_rectangle(0, 300, 600, 100)
+    
+    # Sun
+    set_color(255, 255, 0)
+    draw_circle(500, 80, 40)
+    
+    # House
+    set_color(165, 42, 42)
+    draw_rectangle(100, 200, 150, 150)
+    
+    # Roof
+    set_color(139, 69, 19)
+    draw_rectangle(75, 200, 200, 30)
+    
+    # Door
+    set_color(160, 82, 45)
+    draw_rectangle(150, 280, 50, 70)
+    
+    # Window
+    set_color(173, 216, 230)
+    draw_rectangle(120, 230, 40, 40)
+    
+    # Tree
+    set_color(101, 67, 33)
+    draw_rectangle(400, 220, 30, 130)
+    
+    # Tree top
+    set_color(0, 100, 0)
+    draw_circle(415, 200, 60)
+    
+    # Title
+    set_color(0, 0, 0)
+    draw_text(200, 30, "MicroOS Graphics Demo")
+}
+
+main()`,
+                    
+                    fibonacci: `# Fibonacci Sequence Example
+function main() {
+    print("Calculating Fibonacci Sequence")
+    
+    # Draw the sequence visually
+    set_color(0, 0, 0)
+    draw_text(20, 30, "Fibonacci Sequence Visualization")
+    
+    # We'll use hard-coded values since we don't have full variable support yet
+    
+    set_color(70, 130, 180)
+    draw_rectangle(50, 100, 1, 1)   # 1
+    
+    set_color(70, 130, 180)
+    draw_rectangle(70, 100, 1, 1)   # 1
+    
+    set_color(70, 130, 180)
+    draw_rectangle(90, 100, 2, 2)   # 2
+    
+    set_color(70, 130, 180)
+    draw_rectangle(110, 100, 3, 3)  # 3
+    
+    set_color(70, 130, 180)
+    draw_rectangle(130, 100, 5, 5)  # 5
+    
+    set_color(70, 130, 180)
+    draw_rectangle(150, 100, 8, 8)  # 8
+    
+    set_color(70, 130, 180)
+    draw_rectangle(170, 100, 13, 13)  # 13
+    
+    set_color(70, 130, 180)
+    draw_rectangle(190, 100, 21, 21)  # 21
+    
+    set_color(70, 130, 180)
+    draw_rectangle(220, 100, 34, 34)  # 34
+    
+    set_color(70, 130, 180)
+    draw_rectangle(260, 100, 55, 55)  # 55
+    
+    set_color(0, 0, 0)
+    draw_text(50, 180, "1  1  2  3  5  8  13  21  34  55")
+}
+
+main()`,
+                    
+                    bootloader: `# Simple OS Bootloader Simulation
+function main() {
+    print("Starting MicroOS Bootloader...")
+    
+    # Draw a black background to simulate boot screen
+    set_color(0, 0, 0)
+    draw_rectangle(0, 0, 600, 400)
+    
+    boot_sequence()
+}
+
+function boot_sequence() {
+    # Boot messages
+    set_color(0, 255, 0)
+    draw_text(10, 20, "MicroOS Bootloader v1.0")
+    draw_text(10, 40, "Initializing system...")
+    
+    # Show some fake hardware detection
+    draw_text(10, 60, "CPU: MicroProcessor 3000 @ 2.4GHz")
+    draw_text(10, 80, "Memory: 4096MB Available")
+    draw_text(10, 100, "Disk: 512GB")
+    
+    # Boot progress
+    draw_text(10, 130, "Loading kernel...")
+    set_color(100, 100, 100)
+    draw_rectangle(10, 150, 580, 20)
+    set_color(0, 255, 0)
+    draw_rectangle(10, 150, 580, 20)
+    
+    draw_text(10, 180, "Starting system services...")
+    
+    draw_text(10, 210, "* Initializing file system...")
+    draw_text(10, 230, "* Starting network services...")
+    draw_text(10, 250, "* Loading drivers...")
+    draw_text(10, 270, "* Starting user interface...")
+    
+    # Boot complete
+    draw_text(10, 310, "Boot complete! Welcome to MicroOS")
+    
+    # Draw a simple desktop
+    set_color(0, 0, 128)
+    draw_rectangle(0, 350, 600, 50)
+    
+    set_color(255, 255, 255)
+    draw_text(20, 380, "MicroOS Desktop")
+}
+
+main()`
+                };
+                
+                return examples[exampleName] || '';
+            }
+        }
+        
+        // Initialize when the page loads
+        window.onload = function() {
+            const microOS = new MicroOS();
+            const editor = document.getElementById('editor');
+            const runButton = document.getElementById('run-button');
+            const saveButton = document.getElementById('save-button');
+            const clearButton = document.getElementById('clear-button');
+            const examplesDropdown = document.getElementById('examples-dropdown');
+            
+            // Run button
+            runButton.addEventListener('click', function() {
+                microOS.clearConsole();
+                microOS.execute(editor.value);
+            });
+            
+            // Save button
+            saveButton.addEventListener('click', function() {
+                const blob = new Blob([editor.value], {type: 'text/plain'});
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = 'microos_program.txt';
+                a.click();
+                URL.revokeObjectURL(url);
+                microOS.print("Program saved to 'microos_program.txt'");
+            });
+            
+            // Clear button
+            clearButton.addEventListener('click', function() {
+                microOS.clearConsole();
+            });
+            
+            // Examples dropdown
+            examplesDropdown.addEventListener('change', function() {
+                const selectedExample = examplesDropdown.value;
+                if (selectedExample) {
+                    editor.value = microOS.getExample(selectedExample);
+                    microOS.clearConsole();
+                    microOS.clearDisplay();
+                }
+            });
+            
+            // Initial execution
+            microOS.execute(editor.value);
+        };
+    </script>
+    </body>
+</html>
