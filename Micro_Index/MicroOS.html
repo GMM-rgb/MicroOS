@@ -9,10 +9,11 @@
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             margin: 0;
             padding: 0;
-            background-color: #f0f0f0;
+            background-color: #000;
             display: flex;
             flex-direction: column;
             height: 100vh;
+            overflow: hidden;
         }
         
         header {
@@ -35,12 +36,14 @@
             display: flex;
             flex-direction: column;
             border-right: 1px solid #ccc;
+            border-radius: 5px;
         }
         
         .output-container {
             flex: 1;
             display: flex;
             flex-direction: column;
+            border-radius: 2.5px;
         }
         
         .editor, .console, .display {
@@ -50,6 +53,7 @@
             resize: none;
             font-family: 'Consolas', monospace;
             font-size: 14px;
+            border-radius: 5px;
         }
         
         .editor {
@@ -57,6 +61,22 @@
             background-color: #1e1e1e;
             color: #d4d4d4;
             overflow: auto;
+        }
+
+        .editor::-webkit-scrollbar {
+            width: 6.5px;
+        }
+
+        .editor::-webkit-scrollbar-track {
+            background: lightslategray;
+            border: 1px solid #ccc;
+            border-radius: 3.5px;
+        }
+
+        .editor::-webkit-scrollbar-thumb {
+            background: whitesmoke;
+            border: 1px solid #ccc;
+            border-radius: 3.5px;
         }
         
         .panel-header {
@@ -174,17 +194,19 @@
 
         .context-menu-item {
             padding: 5px 15px;
-            cursor: pointer;
+            border-radius: 5px;
         }
 
         .context-menu-item:hover {
             background-color: #094771;
         }
     </style>
+    <link rel="stylesheet" href="assets/styles/console_styles.css">
+
     </head>
     <body>
         <header>
-            <h1>MicroOS Programming Environment</h1>
+            <h1 class="editor-title-page">MicroOS Programming Environment</h1>
             <div>
                 <select id="examples-dropdown" class="examples-dropdown">
                     <option value>Select Example...</option>
@@ -234,8 +256,10 @@ main()
                 <div id="display" class="display">
                     <canvas id="canvas" width="600" height="400"></canvas>
                 </div>
-                <div class="panel-header">Console Output</div>
-                <div id="console" class="console"></div>
+                <div class="console-container">
+                    <div class="panel-header">Console Output</div>
+                    <div id="console" class="console"></div>    
+                </div>
             </div>
         </div>
 
@@ -401,7 +425,7 @@ main()
                             }
                         }, 1000);
                     });
-            };
+                };
 
         // MicroOS Programming Language Interpreter
         class MicroOS {
@@ -1137,7 +1161,7 @@ main()`
                     microOS.clearDisplay();
                 }
             });
-            
+
             // Initial execution
             microOS.execute(editor.value);
         };

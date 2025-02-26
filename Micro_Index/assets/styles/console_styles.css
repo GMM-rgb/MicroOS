@@ -1,0 +1,19 @@
+.console-container {
+    position: relative;
+
+}
+
+.panel-header {
+    border-radius: 5px;
+}
+
+.console {
+    line-height: 20px;
+    text-shadow: 0 0 5px limegreen;
+    transition: all 0.2s ease;
+    overflow-x: hidden;
+    overflow-y: scroll;
+    text-wrap-mode: nowrap;
+    min-height: 200px;
+    max-height: 210px;
+}
